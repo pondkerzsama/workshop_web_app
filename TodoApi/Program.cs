@@ -1,3 +1,5 @@
+using TodoApi.Dtos;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -14,28 +16,32 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-var summaries = new[]
+var todos = new List<TodoGetDto>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
+    new (1, "string", true),
+    new (2, "smt", false),
+    new (3, "smt2", true)
 };
 
-app.MapGet("/weatherforecast", () =>
+app.MapGet("/api/todos", () => Results.Ok(todos));
+
+app.MapGet("/api/todos/{id}", (int id) =>
 {
-    var forecast =  Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast");
+    var todo = todos.FirstOrDefault(t => t.id == id);
+
+    return todo is not null ? Results.Ok(todo) : Results.NotFound();
+});
+
+app.MapGet("/", () => "Hello Todo API");
+
+app.MapPost("/api/todo/", (TodoPostDto dto) =>
+{
+    var nextId = todos.Count == 0 ? 1 : todos.Max(t => t.id) + 1;
+    var todo = new TodoGetDto(nextId, dto.title, false);
+    todos.Add(todo);
+
+    return Results.Created($"/api/todos/{todo.id}", todo);
+}
+);
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
