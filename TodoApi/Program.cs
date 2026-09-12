@@ -23,7 +23,14 @@ var todos = new List<TodoGetDto>
     new (3, "smt2", true)
 };
 
-app.MapGet("/todos", () => Results.Ok(todos));
+app.MapGet("/api/todos", () => Results.Ok(todos));
+
+app.MapGet("/api/todos/{id}", (int id) =>
+{
+    var todo = todos.FirstOrDefault(t => t.id == id);
+
+    return todo is not null ? Results.Ok(todo) : Results.NotFound();
+});
 
 app.MapGet("/", () => "Hello Todo API");
 
