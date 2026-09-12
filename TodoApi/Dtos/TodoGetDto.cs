@@ -1,4 +1,4 @@
-namespace TodoApi;
+namespace TodoApi.Dtos;
 
 public record TodoGetDto
 (

@@ -1,3 +1,4 @@
+using TodoApi.Dtos;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,6 +15,15 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+var todos = new List<TodoGetDto>
+{
+    new (1, "string", true),
+    new (2, "smt", false),
+    new (3, "smt2", true)
+};
+
+app.MapGet("/todos", () => Results.Ok(todos));
 
 app.MapGet("/", () => "Hello Todo API");
 
