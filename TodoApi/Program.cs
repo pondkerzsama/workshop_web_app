@@ -34,4 +34,14 @@ app.MapGet("/api/todos/{id}", (int id) =>
 
 app.MapGet("/", () => "Hello Todo API");
 
+app.MapPost("/api/todo/", (TodoPostDto dto) =>
+{
+    var nextId = todos.Count == 0 ? 1 : todos.Max(t => t.id) + 1;
+    var todo = new TodoGetDto(nextId, dto.title, false);
+    todos.Add(todo);
+
+    return Results.Created($"/api/todos/{todo.id}", todo);
+}
+);
+
 app.Run();
