@@ -27,7 +27,41 @@ app.UseHttpsRedirection();
 
 var todoGroup = app.MapGroup("/api/todos");
 
+todoGroup.MapGet("/", async (AppDbContext db) =>
+{
+    var todos = await db.Todos
+        .Select(x => new TodoGetDto(x.Id, x.Title, x.IsCompleted))
+        .ToListAsync();
+    
+    return Results.Ok(todos);
+});
+
+todoGroup.MapGet("/{id}", async (int id, AppDbContext db) =>
+{
+   var todo = await db.Todos.FindAsync(id);
+   if (todo is null) return Results.NotFound();
+
+    return Results.Ok(new TodoGetDto(todo.Id, todo.Title,  todo.IsCompleted));
+});
+
+todoGroup.MapPost("/", async (TodoItem dto, AppDbContext db) =>
+{
+    var todo = new TodoItem
+    {
+        Title = dto.Title,
+        IsCompleted = false,
+        CreatedAt = DateTime.UtcNow
+    };
+
+    db.Todos.Add(todo);
+    await db.SaveChangesAsync();
+
+    var result = new TodoGetDto(todo.Id, todo.Title, todo.IsCompleted);
+    return Results.Created($"/api/todos/{todo.Id}", result);
+});
+
 #region api
+
 
 // var todos = new List<TodoGetDto>
 // {
@@ -92,4 +126,6 @@ var todoGroup = app.MapGroup("/api/todos");
 // });
 
 #endregion
- app.Run();
+
+
+app.Run();
