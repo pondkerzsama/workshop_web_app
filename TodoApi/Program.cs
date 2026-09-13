@@ -27,66 +27,69 @@ app.UseHttpsRedirection();
 
 var todoGroup = app.MapGroup("/api/todos");
 
-var todos = new List<TodoGetDto>
-{
-    new (1, "string", true),
-    new (2, "smt", false),
-    new (3, "smt2", true)
-};
+#region api
 
-todoGroup.MapGet("/", () => Results.Ok(todos));
+// var todos = new List<TodoGetDto>
+// {
+//     new (1, "string", true),
+//     new (2, "smt", false),
+//     new (3, "smt2", true)
+// };
 
-todoGroup.MapGet("/{id}", (int id) =>
-{
-    var todo = todos.FirstOrDefault(t => t.id == id);
+// todoGroup.MapGet("/", () => Results.Ok(todos));
 
-    return todo is not null ? Results.Ok(todo) : Results.NotFound();
-});
+// todoGroup.MapGet("/{id}", (int id) =>
+// {
+//     var todo = todos.FirstOrDefault(t => t.id == id);
 
-todoGroup.MapPost("/", (TodoPostDto dto) =>
-{
-    var nextId = todos.Count == 0 ? 1 : todos.Max(t => t.id) + 1;
-    var todo = new TodoGetDto(nextId, dto.title, false);
-    todos.Add(todo);
+//     return todo is not null ? Results.Ok(todo) : Results.NotFound();
+// });
 
-    return Results.Created($"/api/todos/{todo.id}", todo);
-});
+// todoGroup.MapPost("/", (TodoPostDto dto) =>
+// {
+//     var nextId = todos.Count == 0 ? 1 : todos.Max(t => t.id) + 1;
+//     var todo = new TodoGetDto(nextId, dto.title, false);
+//     todos.Add(todo);
 
-todoGroup.MapPut("/{id}", (int id, TodoPutDto dto) =>
-{
-    try
-    {
-        var index = todos.FindIndex(x => x.id == id);
-        if (index == -1) return Results.NotFound();
+//     return Results.Created($"/api/todos/{todo.id}", todo);
+// });
 
-        todos[index] = todos[index] with
-        {
-            Title = dto.Title,
-            IsComplete = dto.IsComplete
-        };
+// todoGroup.MapPut("/{id}", (int id, TodoPutDto dto) =>
+// {
+//     try
+//     {
+//         var index = todos.FindIndex(x => x.id == id);
+//         if (index == -1) return Results.NotFound();
 
-        return Results.Ok(todos[index]);
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem(ex.Message);
-    }
-});
+//         todos[index] = todos[index] with
+//         {
+//             Title = dto.Title,
+//             IsComplete = dto.IsComplete
+//         };
 
-todoGroup.MapDelete("/{id}", (int id) =>
-{
-    try
-    {
-        var todo = todos.FirstOrDefault(x => x.id == id);
-        if (todo is null) return Results.NotFound();
+//         return Results.Ok(todos[index]);
+//     }
+//     catch (Exception ex)
+//     {
+//         return Results.Problem(ex.Message);
+//     }
+// });
 
-        todos.Remove(todo);
-        return Results.NoContent();
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem(ex.Message);
-    }
-});
+// todoGroup.MapDelete("/{id}", (int id) =>
+// {
+//     try
+//     {
+//         var todo = todos.FirstOrDefault(x => x.id == id);
+//         if (todo is null) return Results.NotFound();
 
-app.Run();
+//         todos.Remove(todo);
+//         return Results.NoContent();
+//     }
+//     catch (Exception ex)
+//     {
+//         return Results.Problem(ex.Message);
+//     }
+// });
+
+#endregion
+ app.Run();
