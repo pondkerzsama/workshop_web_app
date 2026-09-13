@@ -38,10 +38,17 @@ todoGroup.MapGet("/", async (AppDbContext db) =>
 
 todoGroup.MapGet("/{id}", async (int id, AppDbContext db) =>
 {
-   var todo = await db.Todos.FindAsync(id);
-   if (todo is null) return Results.NotFound();
+    try
+    {
+        var todo = await db.Todos.FindAsync(id);
+        if (todo is null) return Results.NotFound();
 
-    return Results.Ok(new TodoGetDto(todo.Id, todo.Title,  todo.IsCompleted));
+        return Results.Ok(new TodoGetDto(todo.Id, todo.Title,  todo.IsCompleted));
+    }
+    catch(Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
 });
 
 todoGroup.MapPost("/", async (TodoItem dto, AppDbContext db) =>
