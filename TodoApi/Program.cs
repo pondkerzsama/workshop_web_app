@@ -41,7 +41,27 @@ app.MapPost("/api/todo/", (TodoPostDto dto) =>
     todos.Add(todo);
 
     return Results.Created($"/api/todos/{todo.id}", todo);
-}
-);
+});
+
+app.MapPut("/api/todo/{id}", (int id, TodoPutDto dto) =>
+{
+    try
+    {
+        var index = todos.FindIndex(x => x.id == id);
+        if (index == -1) return Results.NotFound();
+
+        todos[index] = todos[index] with
+        {
+            Title = dto.Title,
+            IsComplete = dto.IsComplete
+        };
+
+        return Results.Ok(todos[index]);
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem(ex.Message);
+    }
+});
 
 app.Run();
