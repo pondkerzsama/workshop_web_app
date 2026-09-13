@@ -2,6 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using TodoApi.Dtos;
 using TodoApi.Data;
 using TodoApi.Models;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,8 +19,28 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
 
-var app = builder.Build();
+var jwtKey = builder.Configuration["jwt:key"]!;
 
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+       options.TokenValidationParameters = new TokenValidationParameters
+       {
+           ValidateIssuer = true,
+           ValidateAudience = true,
+           ValidateLifetime = true,
+           ValidateIssuerSigningKey = true,
+           ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(jwtKey))
+       };
+    });
+
+builder.Services.AddAuthorization();
+
+var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -24,8 +49,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
 
-var todoGroup = app.MapGroup("/api/todos");
+var todoGroup = app
+    .MapGroup("/api/todos")
+    .RequireAuthorization();
 
 todoGroup.MapGet("/", async (AppDbContext db) =>
 {
@@ -69,6 +98,35 @@ todoGroup.MapPost("/", async (TodoItem dto, AppDbContext db) =>
 
 #region api
 
+app.MapPost("/api/auth/login", (
+    LoginDto login,
+    IConfiguration configuration) =>
+{
+    if (login.Username != "student" || login.Password != "password")
+        return Results.Unauthorized();
+
+    var claims = new[]
+    {
+        new Claim(ClaimTypes.Name, login.Username)
+    };
+
+    var key = new SymmetricSecurityKey(
+        Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
+
+    var credentials = new SigningCredentials(
+        key,
+        SecurityAlgorithms.HmacSha256);
+
+    var token = new JwtSecurityToken(
+        issuer: configuration["Jwt:Issuer"],
+        audience: configuration["Jwt:Audience"],
+        claims: claims,
+        expires: DateTime.UtcNow.AddHours(1),
+        signingCredentials: credentials);
+
+    var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+    return Results.Ok(new LoginResponseDto(tokenString));
+});
 
 // var todos = new List<TodoGetDto>
 // {
